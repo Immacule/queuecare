@@ -1,30 +1,33 @@
-# 🏥 QueueCare — Clinic Appointment & Queue Management System
-
-A fully working clinic appointment system with JWT authentication, queue management, role-based access control, a browser UI, and a complete automated test suite.
+# QueueCare — Clinic Appointment & Queue Management System
 
 ---
 
 ## Prerequisites
 
-- **Node.js** v18 or later
-- **npm** v8 or later
-- **Chromium** (for Playwright UI tests — installed automatically)
+- **Node.js** v18 or later — https://nodejs.org
+- **npm** v8 or later — comes with Node.js
+- **Git** — https://git-scm.com
+- **Chromium** — installed automatically by Playwright (see Run UI Tests)
+
+Verify before starting:
+```bash
+node --version    # must be v18 or higher
+npm --version     # must be v8 or higher
+```
 
 ---
 
-## Installation
+## How to Install Dependencies
 
 ```bash
-# Clone / download and enter the project
+git clone https://github.com/Immacule/queuecare.git
 cd queuecare
-
-# Install all dependencies
 npm install
 ```
 
 ---
 
-## Start the Application
+## How to Start the Application
 
 ```bash
 npm start
@@ -32,14 +35,82 @@ npm start
 
 Server runs at **http://localhost:3000**
 
-Open your browser and visit `http://localhost:3000` — you'll be redirected to the login page.
+Open your browser and go to:
+```
+http://localhost:3000
+```
+
+You will be redirected to the login page automatically.
 
 ---
 
-## Seed Demo Data
+## How to Run API Tests
 
-With the server running in one terminal, open another:
+```bash
+npm test
+```
 
+Expected result:
+```
+Test Suites: 5 passed, 5 total
+Tests:       58 passed, 58 total
+```
+
+If tests fail unexpectedly after code changes, clear the Jest cache first:
+```bash
+npx jest --clearCache && npm test
+```
+
+---
+
+## How to Run UI Tests
+
+Install the browser (first time only):
+```bash
+npx playwright install chromium
+```
+
+Run the tests:
+```bash
+npm run test:ui
+```
+
+View the visual HTML report after tests complete:
+```bash
+npx playwright show-report
+```
+
+> Note: Playwright starts and stops the server automatically. You do not need to run `npm start` before running UI tests.
+
+---
+
+## Environment Variables
+
+No `.env` file is required. The app runs with defaults out of the box.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `3000` | HTTP server port |
+| `JWT_SECRET` | `queuecare_super_secret_key_2024` | JWT signing key |
+| `JWT_EXPIRES_IN` | `24h` | How long tokens stay valid |
+| `NODE_ENV` | `development` | Set to `production` to hide stack traces |
+
+To override, set before running:
+```bash
+# Windows
+set PORT=4000 && npm start
+
+# Mac / Linux
+PORT=4000 npm start
+```
+
+---
+
+## Default Test Credentials
+
+Run the seed script first to create demo accounts.
+
+Keep the server running, then open a second terminal:
 ```bash
 npm run seed
 ```
@@ -49,126 +120,3 @@ npm run seed
 | Admin / Staff | admin@queuecare.com | admin123 |
 | Patient | alice@example.com | alice123 |
 | Patient | bob@example.com | bob123 |
-
----
-
-## Run API Tests (Jest + Supertest)
-
-```bash
-# Run all 58 tests
-npm test
-
-# If tests fail unexpectedly after code changes, clear Jest cache first
-npx jest --clearCache && npm test
-
-# Run with code coverage report
-npm run test:coverage
-```
-
----
-
-## Run UI Automation Tests (Playwright)
-
-```bash
-# Install Playwright browser (first time only)
-npx playwright install chromium
-
-# Run all 17 Playwright tests
-npm run test:ui
-
-# View the HTML test report
-npx playwright show-report
-```
-
-> Playwright starts the server automatically via `webServer` config. No need to start it separately.
-
----
-
-## Project Structure
-
-```
-queuecare/
-├── public/                    ← HTML frontend
-│   ├── login.html             ← Login + Register page
-│   └── dashboard.html         ← Main app (appointments + queue)
-├── src/
-│   ├── config/
-│   │   ├── db.js              ← In-memory database
-│   │   └── jwt.js             ← JWT secret & expiry
-│   ├── controllers/           ← Business logic
-│   ├── middleware/            ← JWT auth + validation + errors
-│   ├── models/                ← Data operations
-│   ├── routes/                ← URL → controller wiring
-│   ├── app.js                 ← Express app (no server start)
-│   └── server.js              ← HTTP server entry point
-├── tests/
-│   ├── api/
-│   │   ├── helpers.js
-│   │   ├── auth.test.js
-│   │   ├── appointments.test.js
-│   │   ├── queue.test.js
-│   │   ├── edge-cases.test.js ← All 7 edge cases
-│   │   └── root.test.js
-│   └── ui/
-│       ├── pages/api.page.js
-│       └── queuecare.spec.js  ← 17 Playwright tests
-├── scripts/seed.js
-├── playwright.config.js
-├── package.json
-├── README.md
-└── TEST_REPORT.md
-```
-
----
-
-## API Reference
-
-### Base URL: `http://localhost:3000/api`
-
-#### Auth (public)
-| Method | Endpoint | Body |
-|--------|----------|------|
-| POST | `/auth/register` | `{ name, email, password, role }` |
-| POST | `/auth/login` | `{ email, password }` |
-| GET | `/auth/me` | — (token required) |
-
-#### Appointments (token required)
-| Method | Endpoint | Notes |
-|--------|----------|-------|
-| POST | `/appointments` | Book; queue number auto-assigned |
-| GET | `/appointments` | Patient: own only. Admin: all |
-| GET | `/appointments/:id` | |
-| PATCH | `/appointments/:id` | |
-| DELETE | `/appointments/:id` | |
-
-#### Queue (token required)
-| Method | Endpoint | Role |
-|--------|----------|------|
-| GET | `/queue` | Admin only — today's queue |
-| GET | `/queue/my` | Any user — own queue position |
-| GET | `/queue/date/:date` | Admin only |
-| PATCH | `/queue/:id/status` | Admin only — called/done/skipped |
-
----
-
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `3000` | HTTP server port |
-| `JWT_SECRET` | `queuecare_super_secret_key_2024` | **Change in production** |
-| `JWT_EXPIRES_IN` | `24h` | Token lifetime |
-| `NODE_ENV` | `development` | Set to `production` to hide stack traces |
-
----
-
-## npm Scripts
-
-| Script | Command |
-|--------|---------|
-| `npm start` | Start the server |
-| `npm run dev` | Start with nodemon (auto-reload) |
-| `npm test` | Run 58 Jest + Supertest tests |
-| `npm run test:coverage` | Tests + coverage report |
-| `npm run test:ui` | Run 17 Playwright UI tests |
-| `npm run seed` | Seed demo users & appointments |
