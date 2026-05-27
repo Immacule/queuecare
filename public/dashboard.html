@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QueueCare — Dashboard</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',sans-serif;background:#f0f7ea;min-height:100vh}
+    /* NAV */
+    nav{background:#27500A;padding:0 32px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+    .nav-logo{color:#C0DD97;font-size:20px;font-weight:700;display:flex;align-items:center;gap:8px}
+    .nav-right{display:flex;align-items:center;gap:16px}
+    .nav-user{color:#9FE1CB;font-size:13px}
+    .nav-btn{padding:7px 16px;border-radius:7px;border:1.5px solid #3B6D11;background:transparent;color:#C0DD97;font-size:13px;cursor:pointer;transition:all .15s}
+    .nav-btn:hover{background:#3B6D11}
+    /* LAYOUT */
+    .container{max-width:1100px;margin:0 auto;padding:28px 24px}
+    /* TABS */
+    .page-tabs{display:flex;gap:6px;margin-bottom:24px;background:#fff;border-radius:12px;padding:6px;box-shadow:0 1px 4px rgba(59,109,17,.08);width:fit-content}
+    .page-tab{padding:9px 22px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;color:#639922;transition:all .15s}
+    .page-tab.active{background:#3B6D11;color:#fff}
+    /* STATS */
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px}
+    .stat{background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #C0DD97}
+    .stat-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#639922;margin-bottom:6px}
+    .stat-value{font-size:28px;font-weight:700;color:#173404}
+    .stat-sub{font-size:12px;color:#639922;margin-top:3px}
+    .stat.green{background:#3B6D11;border-color:#27500A}
+    .stat.green .stat-label{color:#9FE1CB}
+    .stat.green .stat-value{color:#fff}
+    .stat.green .stat-sub{color:#C0DD97}
+    /* CARD */
+    .card{background:#fff;border-radius:14px;padding:24px;box-shadow:0 1px 4px rgba(59,109,17,.08);border:1px solid #eaf3de;margin-bottom:24px}
+    .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    .card-title{font-size:16px;font-weight:600;color:#173404}
+    /* BUTTON */
+    .btn{padding:9px 20px;border-radius:8px;border:none;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+    .btn-primary{background:#3B6D11;color:#fff}
+    .btn-primary:hover{background:#27500A}
+    .btn-ghost{background:#fff;color:#3B6D11;border:1.5px solid #C0DD97}
+    .btn-ghost:hover{background:#eaf3de}
+    .btn-danger{background:#fff;color:#991b1b;border:1.5px solid #fca5a5}
+    .btn-danger:hover{background:#fee2e2}
+    .btn-sm{padding:6px 12px;font-size:12px}
+    /* TABLE */
+    .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid #d4e8b8}
+    table{width:100%;border-collapse:collapse;font-size:13.5px}
+    thead tr{background:#f0f7ea}
+    th{text-align:left;padding:11px 14px;font-weight:600;color:#3B6D11;font-size:12px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #d4e8b8}
+    td{padding:12px 14px;color:#173404;border-bottom:1px solid #eef5e3}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#f7faf2}
+    /* PILLS */
+    .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+    .pill-pending{background:#fef3c7;color:#92400e}
+    .pill-confirmed{background:#dcfce7;color:#166534}
+    .pill-completed{background:#d1fae5;color:#065f46}
+    .pill-cancelled{background:#fee2e2;color:#991b1b}
+    .pill-waiting{background:#e0f2fe;color:#0c4a6e}
+    .pill-called{background:#eaf3de;color:#3B6D11}
+    .pill-done{background:#d1fae5;color:#065f46}
+    /* MODAL */
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(23,52,4,.5);z-index:200;align-items:center;justify-content:center}
+    .modal-bg.open{display:flex}
+    .modal{background:#fff;border-radius:16px;padding:32px;width:100%;max-width:460px;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+    .modal h3{font-size:18px;color:#173404;margin-bottom:4px}
+    .modal .sub{font-size:13px;color:#639922;margin-bottom:22px}
+    .form-group{margin-bottom:14px}
+    label{display:block;font-size:12px;font-weight:600;color:#3B6D11;margin-bottom:5px}
+    input,select,textarea{width:100%;padding:10px 12px;border:1.5px solid #C0DD97;border-radius:8px;font-size:13.5px;color:#173404;outline:none;font-family:inherit;transition:border .15s}
+    input:focus,select:focus,textarea:focus{border-color:#3B6D11;box-shadow:0 0 0 3px #eaf3de}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+    .error-msg{background:#fee2e2;color:#991b1b;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
+    .error-msg.show{display:block}
+    /* QUEUE CARDS */
+    .queue-row{display:flex;flex-wrap:wrap;gap:12px}
+    .q-card{background:#f0f7ea;border:1px solid #C0DD97;border-radius:12px;padding:16px 18px;min-width:130px;text-align:center}
+    .q-card.active{background:#3B6D11;border-color:#27500A}
+    .q-card.done-card{opacity:.55}
+    .q-num{font-size:26px;font-weight:700;color:#173404}
+    .q-card.active .q-num{color:#fff}
+    .q-name{font-size:11px;color:#639922;margin-top:2px}
+    .q-card.active .q-name{color:#9FE1CB}
+    /* EMPTY */
+    .empty{text-align:center;padding:40px;color:#639922;font-size:14px}
+    .empty span{display:block;font-size:36px;margin-bottom:8px}
+    /* TOAST */
+    .toast{position:fixed;bottom:24px;right:24px;background:#173404;color:#C0DD97;padding:12px 22px;border-radius:10px;font-size:13px;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s}
+    .toast.show{transform:translateY(0);opacity:1}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">🏥 QueueCare</div>
+  <div class="nav-right">
+    <span class="nav-user" id="nav-user"></span>
+    <button class="nav-btn" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- STATS -->
+  <div class="stats" id="stats">
+    <div class="stat"><div class="stat-label">My Appointments</div><div class="stat-value" id="stat-total">—</div><div class="stat-sub">All time</div></div>
+    <div class="stat"><div class="stat-label">Pending</div><div class="stat-value" id="stat-pending">—</div></div>
+    <div class="stat"><div class="stat-label">Confirmed</div><div class="stat-value" id="stat-confirmed">—</div></div>
+    <div class="stat green"><div class="stat-label">Your Queue No.</div><div class="stat-value" id="stat-queue">—</div><div class="stat-sub" id="stat-queue-sub">Not in queue</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="page-tabs">
+    <div class="page-tab active" onclick="showPage('appointments')" id="ptab-appointments" data-testid="tab-appointments">📅 Appointments</div>
+    <div class="page-tab" onclick="showPage('queue')" id="ptab-queue" data-testid="tab-queue">⏱ Queue Board</div>
+    <div class="page-tab admin-only" onclick="showPage('admin')" id="ptab-admin" data-testid="tab-admin" style="display:none">🔒 Admin Panel</div>
+  </div>
+
+  <!-- APPOINTMENTS PAGE -->
+  <div id="page-appointments">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">My Appointments</div>
+        <button class="btn btn-primary" data-testid="btn-new-appointment" onclick="openNewModal()">+ New Appointment</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Doctor</th><th>Date</th><th>Time</th><th>Queue No.</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="appointments-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUEUE PAGE -->
+  <div id="page-queue" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Today's Queue</div>
+        <button class="btn btn-ghost" onclick="loadQueue()">↺ Refresh</button>
+      </div>
+      <div class="queue-row" id="queue-row"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">My Queue Position</div></div>
+      <div id="my-queue-detail"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN PAGE -->
+  <div id="page-admin" style="display:none">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">All Appointments (Admin)</div>
+        <button class="btn btn-ghost" onclick="loadAdminAppointments()">↺ Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Patient ID</th><th>Doctor</th><th>Date</th><th>Time</th><th>Queue</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="admin-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Queue Management</div>
+        <button class="btn btn-ghost" onclick="loadAdminQueue()">↺ Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Queue No.</th><th>Appointment ID</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="admin-queue-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- NEW / EDIT APPOINTMENT MODAL -->
+<div class="modal-bg" id="appt-modal">
+  <div class="modal">
+    <h3 id="modal-title">Book Appointment</h3>
+    <p class="sub" id="modal-sub">Fill in the details below</p>
+    <div class="error-msg" id="modal-error"></div>
+    <div class="form-group">
+      <label for="appt-doctor">Doctor name</label>
+      <input type="text" id="appt-doctor" data-testid="appt-doctor" placeholder="e.g. Dr. Smith"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="appt-date">Date</label>
+        <input type="date" id="appt-date" data-testid="appt-date"/>
+      </div>
+      <div class="form-group">
+        <label for="appt-time">Time</label>
+        <input type="time" id="appt-time" data-testid="appt-time"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="appt-notes">Notes (optional)</label>
+      <textarea id="appt-notes" data-testid="appt-notes" rows="2" placeholder="Reason for visit..."></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modal-save-btn" data-testid="appt-submit" onclick="saveAppointment()">Book Appointment</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = '/api';
+  let token = localStorage.getItem('token');
+  let user = JSON.parse(localStorage.getItem('user') || 'null');
+  let editingId = null;
+
+  if (!token) window.location.href = '/login.html';
+
+  // ── Init ─────────────────────────────────────────────────────────
+  window.onload = () => {
+    document.getElementById('nav-user').textContent = `${user?.name || ''} (${user?.role || ''})`;
+    if (user?.role === 'admin') {
+      document.getElementById('ptab-admin').style.display = 'block';
+    }
+    // Set min date to today
+    document.getElementById('appt-date').min = new Date().toISOString().split('T')[0];
+    loadDashboard();
+  };
+
+  function showPage(page) {
+    ['appointments','queue','admin'].forEach(p => {
+      document.getElementById(`page-${p}`).style.display = p === page ? 'block' : 'none';
+      const tab = document.getElementById(`ptab-${p}`);
+      if (tab) tab.className = 'page-tab' + (p === page ? ' active' : '');
+    });
+    if (page === 'queue') { loadQueue(); loadMyQueue(); }
+    if (page === 'admin') { loadAdminAppointments(); loadAdminQueue(); }
+  }
+
+  // ── API helper ───────────────────────────────────────────────────
+  async function api(method, path, body) {
+    const opts = { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(API + path, opts);
+    const data = await res.json();
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  // ── Dashboard ────────────────────────────────────────────────────
+  async function loadDashboard() {
+    await loadAppointments();
+    await loadMyQueue();
+  }
+
+  // ── Appointments ─────────────────────────────────────────────────
+  async function loadAppointments() {
+    const { ok, data } = await api('GET', '/appointments');
+    if (!ok) return;
+    const list = data.data.appointments;
+    const pending = list.filter(a => a.status === 'pending').length;
+    const confirmed = list.filter(a => a.status === 'confirmed').length;
+    document.getElementById('stat-total').textContent = list.length;
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-confirmed').textContent = confirmed;
+    renderAppointments(list);
+  }
+
+  function renderAppointments(list) {
+    const tbody = document.getElementById('appointments-body');
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span>📅</span>No appointments yet. Book your first one!</div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = list.map(a => `
+      <tr data-testid="appt-row-${a.id}">
+        <td>${a.doctorName}</td>
+        <td>${a.date}</td>
+        <td>${a.time}</td>
+        <td><strong>${a.queueNumber || '—'}</strong></td>
+        <td>${pillFor(a.status)}</td>
+        <td>
+          ${a.status !== 'cancelled' && a.status !== 'completed' ? `
+            <button class="btn btn-ghost btn-sm" data-testid="btn-edit-${a.id}" onclick="openEditModal('${a.id}')">Edit</button>
+            <button class="btn btn-danger btn-sm" data-testid="btn-cancel-${a.id}" onclick="cancelAppointment('${a.id}')">Cancel</button>
+          ` : '—'}
+        </td>
+      </tr>`).join('');
+  }
+
+  // ── Queue ────────────────────────────────────────────────────────
+  async function loadQueue() {
+    const today = new Date().toISOString().split('T')[0];
+    const { ok, data } = await api('GET', `/queue/date/${today}`);
+    const row = document.getElementById('queue-row');
+    if (!ok || !data.data.queue.length) {
+      row.innerHTML = '<div class="empty" style="width:100%"><span>⏱</span>No queue entries for today yet.</div>';
+      return;
+    }
+    row.innerHTML = data.data.queue.map(q => `
+      <div class="q-card ${q.status === 'called' ? 'active' : q.status === 'done' ? 'done-card' : ''}">
+        <div class="q-num">${q.number}</div>
+        <div class="q-name">${q.status}</div>
+      </div>`).join('');
+  }
+
+  async function loadMyQueue() {
+    const { ok, data } = await api('GET', '/queue/my');
+    if (!ok) return;
+    const entries = data.data.queueEntries;
+    const detail = document.getElementById('my-queue-detail');
+    if (!entries.length) {
+      document.getElementById('stat-queue').textContent = '—';
+      document.getElementById('stat-queue-sub').textContent = 'Not in queue';
+      if (detail) detail.innerHTML = '<div class="empty"><span>🪑</span>You are not in any queue today.</div>';
+      return;
+    }
+    const first = entries[0];
+    document.getElementById('stat-queue').textContent = first.number;
+    document.getElementById('stat-queue-sub').textContent = `Position: ${first.position || '?'}`;
+    if (detail) detail.innerHTML = entries.map(e => `
+      <div style="display:flex;align-items:center;gap:16px;padding:12px;background:#f0f7ea;border-radius:10px;margin-bottom:10px">
+        <div style="font-size:28px;font-weight:700;color:#3B6D11;min-width:70px">${e.number}</div>
+        <div>
+          <div style="font-weight:600;color:#173404">${e.appointment?.doctorName}</div>
+          <div style="font-size:12px;color:#639922">${e.appointment?.date} at ${e.appointment?.time}</div>
+          <div style="margin-top:4px">${pillFor(e.status)}</div>
+        </div>
+        <div style="margin-left:auto;font-size:13px;color:#639922">Position: <strong>${e.position || '?'}</strong></div>
+      </div>`).join('');
+  }
+
+  // ── Admin ────────────────────────────────────────────────────────
+  async function loadAdminAppointments() {
+    const { ok, data } = await api('GET', '/appointments');
+    if (!ok) return;
+    const list = data.data.appointments;
+    const tbody = document.getElementById('admin-body');
+    tbody.innerHTML = list.map(a => `
+      <tr>
+        <td style="font-size:11px;color:#639922">${a.patientId.slice(0,8)}…</td>
+        <td>${a.doctorName}</td>
+        <td>${a.date}</td>
+        <td>${a.time}</td>
+        <td><strong>${a.queueNumber || '—'}</strong></td>
+        <td>${pillFor(a.status)}</td>
+        <td>
+          <select onchange="adminUpdateStatus('${a.id}', this.value)" style="padding:5px 8px;font-size:12px;border:1px solid #C0DD97;border-radius:6px">
+            <option value="">Change…</option>
+            <option value="confirmed">Confirm</option>
+            <option value="completed">Complete</option>
+            <option value="cancelled">Cancel</option>
+          </select>
+        </td>
+      </tr>`).join('');
+  }
+
+  async function loadAdminQueue() {
+    const today = new Date().toISOString().split('T')[0];
+    const { ok, data } = await api('GET', `/queue/date/${today}`);
+    if (!ok) return;
+    const tbody = document.getElementById('admin-queue-body');
+    tbody.innerHTML = data.data.queue.map(q => `
+      <tr>
+        <td><strong>${q.number}</strong></td>
+        <td style="font-size:11px;color:#639922">${q.appointmentId.slice(0,8)}…</td>
+        <td>${pillFor(q.status, true)}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="callPatient('${q.id}')" ${q.status==='done'?'disabled':''}>Call</button>
+          <button class="btn btn-primary btn-sm" data-testid="btn-serve-${q.id}" onclick="markServed('${q.id}')" ${q.status==='done'?'disabled':''}>Mark Served</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  async function adminUpdateStatus(id, status) {
+    if (!status) return;
+    await api('PATCH', `/appointments/${id}`, { status });
+    toast('Status updated.');
+    loadAdminAppointments();
+  }
+
+  async function callPatient(queueId) {
+    await api('PATCH', `/queue/${queueId}/status`, { status: 'called' });
+    toast('Patient called!');
+    loadAdminQueue();
+    loadQueue();
+  }
+
+  async function markServed(queueId) {
+    const { data } = await api('PATCH', `/queue/${queueId}/status`, { status: 'done' });
+    toast(data.message || 'Patient marked as served.');
+    loadAdminQueue();
+    loadQueue();
+  }
+
+  // ── Appointment Modal ────────────────────────────────────────────
+  function openNewModal() {
+    editingId = null;
+    document.getElementById('modal-title').textContent = 'Book Appointment';
+    document.getElementById('modal-sub').textContent = 'Fill in the details below';
+    document.getElementById('modal-save-btn').textContent = 'Book Appointment';
+    document.getElementById('appt-doctor').value = '';
+    document.getElementById('appt-date').value = '';
+    document.getElementById('appt-time').value = '';
+    document.getElementById('appt-notes').value = '';
+    hideModalError();
+    document.getElementById('appt-modal').classList.add('open');
+  }
+
+  async function openEditModal(id) {
+    const { ok, data } = await api('GET', `/appointments/${id}`);
+    if (!ok) return;
+    const a = data.data.appointment;
+    editingId = id;
+    document.getElementById('modal-title').textContent = 'Edit Appointment';
+    document.getElementById('modal-sub').textContent = 'Update the details below';
+    document.getElementById('modal-save-btn').textContent = 'Save Changes';
+    document.getElementById('appt-doctor').value = a.doctorName;
+    document.getElementById('appt-date').value = a.date;
+    document.getElementById('appt-time').value = a.time;
+    document.getElementById('appt-notes').value = a.notes || '';
+    hideModalError();
+    document.getElementById('appt-modal').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('appt-modal').classList.remove('open'); }
+  function hideModalError() {
+    const el = document.getElementById('modal-error');
+    el.style.display = 'none'; el.textContent = '';
+  }
+  function showModalError(msg) {
+    const el = document.getElementById('modal-error');
+    el.textContent = msg; el.style.display = 'block';
+  }
+
+  async function saveAppointment() {
+    hideModalError();
+    const doctor = document.getElementById('appt-doctor').value.trim();
+    const date = document.getElementById('appt-date').value;
+    const time = document.getElementById('appt-time').value;
+    const notes = document.getElementById('appt-notes').value.trim();
+
+    if (!doctor || !date || !time) {
+      showModalError('Please fill in Doctor, Date, and Time.');
+      return;
+    }
+
+    const body = { doctorName: doctor, date, time, notes };
+    const { ok, data } = editingId
+      ? await api('PATCH', `/appointments/${editingId}`, body)
+      : await api('POST', '/appointments', body);
+
+    if (!ok) {
+      const msg = data.errors ? data.errors.join(' ') : (data.message || 'Failed to save.');
+      showModalError(msg);
+      return;
+    }
+
+    closeModal();
+    toast(editingId ? 'Appointment updated!' : 'Appointment booked! Queue: ' + data.data?.appointment?.queueNumber);
+    loadAppointments();
+  }
+
+  async function cancelAppointment(id) {
+    if (!confirm('Cancel this appointment?')) return;
+    const { data } = await api('DELETE', `/appointments/${id}`);
+    toast(data.message || 'Appointment cancelled.');
+    loadAppointments();
+    loadQueue();
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────
+  function pillFor(status, isQueue = false) {
+    const map = {
+      pending:   'pill-pending',
+      confirmed: 'pill-confirmed',
+      completed: 'pill-completed',
+      cancelled: 'pill-cancelled',
+      waiting:   'pill-waiting',
+      called:    'pill-called',
+      done:      'pill-done',
+    };
+    return `<span class="pill ${map[status] || ''}">${status}</span>`;
+  }
+
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login.html';
+  }
+</script>
+</body>
+</html>

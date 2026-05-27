@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QueueCare — Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f7ea; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .card { background: #fff; border-radius: 16px; padding: 40px 36px; width: 100%; max-width: 420px; box-shadow: 0 4px 24px rgba(59,109,17,.12); }
+    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+    .logo-icon { width: 42px; height: 42px; background: #3B6D11; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; }
+    .logo-text h1 { font-size: 22px; color: #173404; font-weight: 700; }
+    .logo-text p { font-size: 12px; color: #639922; }
+    h2 { font-size: 18px; color: #27500A; margin-bottom: 6px; }
+    .sub { font-size: 13px; color: #639922; margin-bottom: 24px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #3B6D11; margin-bottom: 5px; }
+    input { width: 100%; padding: 11px 14px; border: 1.5px solid #C0DD97; border-radius: 8px; font-size: 14px; color: #173404; outline: none; transition: border .15s; }
+    input:focus { border-color: #3B6D11; box-shadow: 0 0 0 3px #eaf3de; }
+    input[data-testid] { }
+    .btn { width: 100%; padding: 12px; background: #3B6D11; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: background .15s; }
+    .btn:hover { background: #27500A; }
+    .error { background: #fee2e2; color: #991b1b; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 16px; display: none; }
+    .error.show { display: block; }
+    .switch { text-align: center; margin-top: 20px; font-size: 13px; color: #639922; }
+    .switch a { color: #3B6D11; font-weight: 600; text-decoration: none; }
+    .tabs { display: flex; gap: 4px; background: #eaf3de; border-radius: 10px; padding: 4px; margin-bottom: 24px; }
+    .tab { flex: 1; padding: 8px; border-radius: 7px; text-align: center; font-size: 13px; font-weight: 500; cursor: pointer; color: #3B6D11; transition: all .15s; }
+    .tab.active { background: #fff; color: #173404; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">🏥</div>
+      <div class="logo-text">
+        <h1>QueueCare</h1>
+        <p>Clinic Management System</p>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('login')" id="tab-login">Login</div>
+      <div class="tab" onclick="showTab('register')" id="tab-register">Register</div>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="login-form">
+      <h2>Welcome back</h2>
+      <p class="sub">Sign in to manage your appointments</p>
+      <div class="error" id="login-error"></div>
+      <div class="form-group">
+        <label for="login-email">Email address</label>
+        <input type="email" id="login-email" data-testid="login-email" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" data-testid="login-password" placeholder="••••••••" />
+      </div>
+      <button class="btn" data-testid="login-submit" onclick="login()">Sign In</button>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="register-form" style="display:none">
+      <h2>Create account</h2>
+      <p class="sub">Register as a patient</p>
+      <div class="error" id="register-error"></div>
+      <div class="form-group">
+        <label for="reg-name">Full name</label>
+        <input type="text" id="reg-name" data-testid="register-name" placeholder="Your full name" />
+      </div>
+      <div class="form-group">
+        <label for="reg-email">Email address</label>
+        <input type="email" id="reg-email" data-testid="register-email" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label for="reg-password">Password</label>
+        <input type="password" id="reg-password" data-testid="register-password" placeholder="Min 6 characters" />
+      </div>
+      <div class="form-group">
+        <label for="reg-role">Role</label>
+        <select id="reg-role" data-testid="register-role" style="width:100%;padding:11px 14px;border:1.5px solid #C0DD97;border-radius:8px;font-size:14px;color:#173404;outline:none;">
+          <option value="patient">Patient</option>
+          <option value="admin">Admin / Staff</option>
+        </select>
+      </div>
+      <button class="btn" data-testid="register-submit" onclick="register()">Create Account</button>
+    </div>
+  </div>
+
+  <script>
+    function showTab(tab) {
+      document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+      document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+      document.getElementById('tab-login').className = 'tab' + (tab === 'login' ? ' active' : '');
+      document.getElementById('tab-register').className = 'tab' + (tab === 'register' ? ' active' : '');
+    }
+
+    function showError(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.classList.add('show');
+    }
+    function hideError(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    async function login() {
+      hideError('login-error');
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      if (!email || !password) {
+        showError('login-error', 'Please enter your email and password.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showError('login-error', data.message || 'Login failed.');
+          return;
+        }
+        localStorage.setItem('token', data.data.token);
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+        window.location.href = '/dashboard.html';
+      } catch (e) {
+        showError('login-error', 'Could not connect to server.');
+      }
+    }
+
+    async function register() {
+      hideError('register-error');
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const role = document.getElementById('reg-role').value;
+
+      if (!name || !email || !password) {
+        showError('register-error', 'Please fill in all fields.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password, role }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const msg = data.errors ? data.errors.join(' ') : (data.message || 'Registration failed.');
+          showError('register-error', msg);
+          return;
+        }
+        localStorage.setItem('token', data.data.token);
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+        window.location.href = '/dashboard.html';
+      } catch (e) {
+        showError('register-error', 'Could not connect to server.');
+      }
+    }
+
+    // Allow Enter key to submit
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const loginVisible = document.getElementById('login-form').style.display !== 'none';
+        loginVisible ? login() : register();
+      }
+    });
+
+    // Redirect if already logged in
+    if (localStorage.getItem('token')) window.location.href = '/dashboard.html';
+  </script>
+</body>
+</html>
