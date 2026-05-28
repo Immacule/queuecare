@@ -7,7 +7,7 @@
 
 ---
 
-## What You Built
+## What I Built
 
 A REST API + HTML frontend for a clinic appointment and queue management system.
 
@@ -21,7 +21,7 @@ A REST API + HTML frontend for a clinic appointment and queue management system.
 
 ---
 
-## What You Tested
+## What I Tested
 
 ### API Tests (Jest + Supertest) — 58 tests
 
@@ -109,7 +109,7 @@ A REST API + HTML frontend for a clinic appointment and queue management system.
 
 ---
 
-## What You Would Improve (Given More Time)
+## What I Would Improve (Given More Time)
 
 | Improvement | Priority | Reason |
 |-------------|----------|--------|
