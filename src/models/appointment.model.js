@@ -1,99 +1,69 @@
-/**
- * appointment.model.js — Appointment Model
- *
- * Statuses: "pending" → "confirmed" → "completed" | "cancelled"
- * Queue number: assigned immediately on create (auto-increments per day)
- */
-
 const { v4: uuidv4 } = require("uuid");
-const db = require("../config/db");
+
+const db = { appointments: [], queue: [] };
 
 const AppointmentModel = {
-  /** Create a new appointment. Queue number assigned immediately. */
   create({ patientId, doctorName, date, time, notes = "" }) {
-    // Check for duplicate: same patient, same date, active appointment
     const duplicate = db.appointments.find(
-      (a) =>
-        a.patientId === patientId &&
-        a.date === date &&
-        !["cancelled"].includes(a.status)
+      a => a.patientId === patientId && a.date === date && a.status !== "cancelled"
     );
     if (duplicate) {
-      const err = new Error(
-        "You already have an active appointment on this date."
-      );
+      const err = new Error("You already have an active appointment on this date.");
       err.statusCode = 409;
       throw err;
     }
-
-    // Auto-assign queue number on booking
-    const todayCount = db.appointments.filter(
-      (a) => a.date === date && a.status !== "cancelled"
-    ).length;
-    const queueNumber = `Q-${String(todayCount + 1).padStart(3, "0")}`;
-
+    const count = db.appointments.filter(a => a.date === date && a.status !== "cancelled").length;
+    const queueNumber = `Q-${String(count + 1).padStart(3, "0")}`;
     const appointment = {
-      id: uuidv4(),
-      patientId,
-      doctorName,
-      date,
-      time,
-      notes,
-      status: "pending",
-      queueNumber,
+      id: uuidv4(), _id: uuidv4(),
+      patientId, doctorName, date, time, notes,
+      status: "pending", queueNumber,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-
     db.appointments.push(appointment);
-
-    // Also add to queue
     db.queue.push({
-      id: uuidv4(),
+      id: uuidv4(), _id: uuidv4(),
       appointmentId: appointment.id,
-      number: queueNumber,
-      date,
+      number: queueNumber, date,
       status: "waiting",
       assignedAt: new Date().toISOString(),
       calledAt: null,
     });
-
     return appointment;
   },
-
-  findAll() {
-    return [...db.appointments];
-  },
-
-  findByPatientId(patientId) {
-    return db.appointments.filter((a) => a.patientId === patientId);
-  },
-
-  findById(id) {
-    return db.appointments.find((a) => a.id === id);
-  },
-
+  findAll() { return [...db.appointments]; },
+  findByPatientId(id) { return db.appointments.filter(a => a.patientId === id); },
+  findById(id) { return db.appointments.find(a => a.id === id || a._id === id); },
   update(id, changes) {
-    const index = db.appointments.findIndex((a) => a.id === id);
-    if (index === -1) return null;
-    db.appointments[index] = {
-      ...db.appointments[index],
-      ...changes,
-      updatedAt: new Date().toISOString(),
-    };
-    return db.appointments[index];
+    const i = db.appointments.findIndex(a => a.id === id || a._id === id);
+    if (i === -1) return null;
+    db.appointments[i] = { ...db.appointments[i], ...changes, updatedAt: new Date().toISOString() };
+    return db.appointments[i];
   },
-
   delete(id) {
-    const index = db.appointments.findIndex((a) => a.id === id);
-    if (index === -1) return false;
-    db.appointments.splice(index, 1);
+    const i = db.appointments.findIndex(a => a.id === id || a._id === id);
+    if (i === -1) return false;
+    db.appointments.splice(i, 1);
     return true;
   },
-
-  findByDate(date) {
-    return db.appointments.filter((a) => a.date === date);
-  },
+  findByDate(date) { return db.appointments.filter(a => a.date === date); },
+  _reset() { db.appointments = []; db.queue = []; },
+  _getQueue() { return db.queue; },
 };
 
-module.exports = AppointmentModel;
+if (process.env.NODE_ENV !== "test") {
+  const mongoose = require("mongoose");
+  const appointmentSchema = new mongoose.Schema({
+    patientId:   { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    doctorName:  { type: String, required: true, trim: true, minlength: 2 },
+    date:        { type: String, required: true },
+    time:        { type: String, required: true },
+    notes:       { type: String, default: "" },
+    status:      { type: String, enum: ["pending","confirmed","completed","cancelled"], default: "pending" },
+    queueNumber: { type: String, default: null },
+  }, { timestamps: true });
+  module.exports = mongoose.model("Appointment", appointmentSchema);
+} else {
+  module.exports = AppointmentModel;
+}

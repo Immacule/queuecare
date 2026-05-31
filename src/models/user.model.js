@@ -1,70 +1,62 @@
-/**
- * user.model.js — User Model
- *
- * Provides functions to create and find users.
- * Passwords are hashed with bcrypt before storing — never store plain text passwords!
- *
- * Roles:
- *   "patient" → can book appointments, see their own queue
- *   "admin"   → can manage all appointments, see all queues
- */
-
 const bcrypt = require("bcryptjs");
 const { v4: uuidv4 } = require("uuid");
-const db = require("../config/db");
 
-const SALT_ROUNDS = 10; // bcrypt work factor
+const db = { users: [] };
 
 const UserModel = {
-  /**
-   * Create a new user.
-   * Hashes the password, assigns a UUID, then saves to db.users.
-   */
   async create({ name, email, password, role = "patient" }) {
-    // Prevent duplicate emails
-    const existing = db.users.find((u) => u.email === email);
+    const existing = db.users.find(u => u.email === email.toLowerCase().trim());
     if (existing) throw new Error("Email already registered");
-
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
+    const hashed = await bcrypt.hash(password, 10);
     const user = {
       id: uuidv4(),
+      _id: uuidv4(),
       name,
       email: email.toLowerCase().trim(),
-      password: hashedPassword,
-      role, // "patient" | "admin"
+      password: hashed,
+      role,
       createdAt: new Date().toISOString(),
     };
-
     db.users.push(user);
-
-    // Return user without password (never expose hashed password)
-    const { password: _, ...safeUser } = user;
-    return safeUser;
+    const { password: _, ...safe } = user;
+    return safe;
   },
-
-  /** Find a user by email (used during login). */
   findByEmail(email) {
-    return db.users.find((u) => u.email === email.toLowerCase().trim());
+    return db.users.find(u => u.email === email.toLowerCase().trim());
   },
-
-  /** Find a user by ID (used when decoding JWT). */
   findById(id) {
-    return db.users.find((u) => u.id === id);
+    return db.users.find(u => u.id === id || u._id === id);
   },
-
-  /** Get all users (admin only). Strip passwords first. */
   findAll() {
     return db.users.map(({ password: _, ...u }) => u);
   },
-
-  /**
-   * Verify a plain-text password against the stored hash.
-   * Returns true/false.
-   */
-  async verifyPassword(plainText, hash) {
-    return bcrypt.compare(plainText, hash);
+  async verifyPassword(plain, hash) {
+    return bcrypt.compare(plain, hash);
   },
+  _reset() { db.users = []; },
 };
 
-module.exports = UserModel;
+if (process.env.NODE_ENV !== "test") {
+  const mongoose = require("mongoose");
+
+  const userSchema = new mongoose.Schema({
+    name:     { type: String, required: true, trim: true, minlength: 2 },
+    email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, required: true, minlength: 6, select: false },
+    role:     { type: String, enum: ["patient", "admin"], default: "patient" },
+  }, { timestamps: true });
+
+  userSchema.pre("save", async function (next) {
+    if (!this.isModified("password")) return next();
+    this.password = await bcrypt.hash(this.password, 10);
+    next();
+  });
+
+  userSchema.methods.verifyPassword = async function (plain) {
+    return bcrypt.compare(plain, this.password);
+  };
+
+  module.exports = mongoose.model("User", userSchema);
+} else {
+  module.exports = UserModel;
+}

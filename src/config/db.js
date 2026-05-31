@@ -1,19 +1,19 @@
-/**
- * db.js — In-Memory Database
- *
- * For simplicity (and zero setup), we store data in plain JS arrays.
- * In a real app you'd swap this for PostgreSQL, MongoDB, etc.
- *
- * Structure:
- *   users[]        → registered accounts
- *   appointments[] → booked appointments
- *   queue[]        → today's queue numbers
- */
+require("dotenv").config();
+const mongoose = require("mongoose");
 
-const db = {
-  users: [],        // { id, name, email, password, role }
-  appointments: [], // { id, patientId, doctorName, date, time, status, queueNumber }
-  queue: [],        // { id, appointmentId, number, date, status }
+const connectDB = async () => {
+  if (process.env.NODE_ENV === "test") return;
+
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 30000,
+      family: 4,
+    });
+    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+  } catch (error) {
+    console.error(`❌ MongoDB connection failed: ${error.message}`);
+    // Don't exit — let the app keep running with whatever connected
+  }
 };
 
-module.exports = db;
+module.exports = connectDB;
