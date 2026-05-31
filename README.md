@@ -1,62 +1,108 @@
 # QueueCare — Clinic Appointment & Queue Management System
 
+A Node.js REST API with a plain HTML frontend for managing clinic appointments and patient queues.
+
 ---
 
 ## Prerequisites
 
+Before you start, make sure you have the following installed:
+
 - **Node.js** v18 or later — https://nodejs.org
 - **npm** v8 or later — comes with Node.js
 - **Git** — https://git-scm.com
-- **Chromium** — installed automatically by Playwright (see Run UI Tests)
+- **MongoDB Community Server** v8 or later — https://www.mongodb.com/try/download/community
 
-Verify before starting:
+Verify your versions:
 ```bash
-node --version    # must be v18 or higher
-npm --version     # must be v8 or higher
+node --version
+npm --version
 ```
 
 ---
 
-## How to Install Dependencies
+## How to Install
 
+**Step 1 — Clone the repository:**
 ```bash
 git clone https://github.com/Immacule/queuecare.git
 cd queuecare
+```
+
+**Step 2 — Install dependencies:**
+```bash
 npm install
+```
+
+**Step 3 — Create your `.env` file** in the project root:
+```
+MONGODB_URI=mongodb://localhost:27017/queuecare
+PORT=3000
+JWT_SECRET=queuecare_super_secret_key_2024
+JWT_EXPIRES_IN=24h
+NODE_ENV=development
 ```
 
 ---
 
-## How to Start the Application
+## How to Run the Application
 
+**Step 1 — Start MongoDB** (open CMD as Administrator):
+```bash
+net start MongoDB
+```
+
+**Step 2 — Start the server:**
 ```bash
 npm start
 ```
 
-Server runs at **http://localhost:3000**
+You should see:
+```
+✅ MongoDB Connected: localhost
+🏥 QueueCare API Server
+   Running on http://localhost:3000
+```
 
-Open your browser and go to:
+**Step 3 — Open in browser:**
 ```
 http://localhost:3000
 ```
 
-You will be redirected to the login page automatically.
+---
+
+## How to Seed Demo Data
+
+With the server running, open a second terminal and run:
+```bash
+npm run seed
+```
+
+This creates the following demo accounts:
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@queuecare.com | admin123 |
+| Patient | alice@example.com | alice123 |
+| Patient | bob@example.com | bob123 |
 
 ---
 
 ## How to Run API Tests
 
+API tests use in-memory data — no MongoDB connection needed:
+
 ```bash
 npm test
 ```
 
-Expected result:
+Expected output:
 ```
-Test Suites: 5 passed, 5 total
-Tests:       58 passed, 58 total
+Test Suites: 5 total
+Tests:       58 total
 ```
 
-If tests fail unexpectedly after code changes, clear the Jest cache first:
+If tests fail unexpectedly, clear the Jest cache first:
 ```bash
 npx jest --clearCache && npm test
 ```
@@ -65,58 +111,121 @@ npx jest --clearCache && npm test
 
 ## How to Run UI Tests
 
-Install the browser (first time only):
+**Step 1 — Install Chromium** (first time only):
 ```bash
 npx playwright install chromium
 ```
 
-Run the tests:
+**Step 2 — Run UI tests:**
 ```bash
 npm run test:ui
 ```
 
-View the visual HTML report after tests complete:
+**Step 3 — View the HTML report:**
 ```bash
 npx playwright show-report
 ```
 
-> Note: Playwright starts and stops the server automatically. You do not need to run `npm start` before running UI tests.
+> Note: Make sure the server is running on port 3000 before running UI tests.
 
 ---
 
 ## Environment Variables
 
-No `.env` file is required. The app runs with defaults out of the box.
-
-| Variable | Default | Description |
-|----------|---------|-------------|
+| Variable | Example Value | Description |
+|----------|--------------|-------------|
+| `MONGODB_URI` | `mongodb://localhost:27017/queuecare` | MongoDB connection string |
 | `PORT` | `3000` | HTTP server port |
-| `JWT_SECRET` | `queuecare_super_secret_key_2024` | JWT signing key |
-| `JWT_EXPIRES_IN` | `24h` | How long tokens stay valid |
-| `NODE_ENV` | `development` | Set to `production` to hide stack traces |
+| `JWT_SECRET` | `queuecare_super_secret_key_2024` | JWT signing secret |
+| `JWT_EXPIRES_IN` | `24h` | Token expiry duration |
+| `NODE_ENV` | `development` | Environment mode |
 
-To override, set before running:
-```bash
-# Windows
-set PORT=4000 && npm start
+## API Endpoints
 
-# Mac / Linux
-PORT=4000 npm start
+### Auth
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/api/auth/register` | Register new user | None |
+| POST | `/api/auth/login` | Login and get token | None |
+| GET | `/api/auth/me` | Get current user | Required |
+
+### Appointments
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| POST | `/api/appointments` | Book appointment | Patient |
+| GET | `/api/appointments` | List appointments | Required |
+| GET | `/api/appointments/:id` | Get one appointment | Required |
+| PATCH | `/api/appointments/:id` | Update appointment | Required |
+| DELETE | `/api/appointments/:id` | Cancel appointment | Required |
+
+### Queue
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| GET | `/api/queue` | Today's queue | Admin |
+| GET | `/api/queue/my` | My queue position | Patient |
+| GET | `/api/queue/date/:date` | Queue for a date | Admin |
+| PATCH | `/api/queue/:id/status` | Update queue status | Admin |
+
+---
+
+## Project Structure
+
+```
+queuecare/
+├── public/
+│   ├── login.html
+│   └── dashboard.html
+├── src/
+│   ├── config/
+│   │   ├── db.js
+│   │   └── jwt.js
+│   ├── controllers/
+│   │   ├── auth.controller.js
+│   │   ├── appointment.controller.js
+│   │   └── queue.controller.js
+│   ├── middleware/
+│   │   ├── auth.middleware.js
+│   │   ├── validate.middleware.js
+│   │   └── error.middleware.js
+│   ├── models/
+│   │   ├── user.model.js
+│   │   ├── appointment.model.js
+│   │   └── queue.model.js
+│   ├── routes/
+│   │   ├── auth.routes.js
+│   │   ├── appointment.routes.js
+│   │   └── queue.routes.js
+│   ├── app.js
+│   └── server.js
+├── tests/
+│   ├── api/
+│   │   ├── helpers.js
+│   │   ├── auth.test.js
+│   │   ├── appointments.test.js
+│   │   ├── queue.test.js
+│   │   ├── edge-cases.test.js
+│   │   └── root.test.js
+│   └── ui/
+│       └── queuecare.spec.js
+├── scripts/
+│   └── seed.js
+├── .env.example
+├── package.json
+├── playwright.config.js
+├── README.md
+└── TEST_REPORT.md
 ```
 
 ---
 
-## Default Test Credentials
+## Tech Stack
 
-Run the seed script first to create demo accounts.
-
-Keep the server running, then open a second terminal:
-```bash
-npm run seed
-```
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin / Staff | admin@queuecare.com | admin123 |
-| Patient | alice@example.com | alice123 |
-| Patient | bob@example.com | bob123 |
+| Layer | Technology |
+|-------|-----------|
+| Runtime | Node.js v18+ |
+| Framework | Express.js |
+| Database | MongoDB + Mongoose |
+| Authentication | JWT + bcryptjs |
+| Frontend | Plain HTML + JavaScript |
+| API Testing | Jest + Supertest |
+| UI Automation | Playwright |
