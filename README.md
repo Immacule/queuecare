@@ -42,7 +42,8 @@ JWT_SECRET=queuecare_super_secret_key_2024
 JWT_EXPIRES_IN=24h
 NODE_ENV=development
 ```
-
+**DEPLOYMENT LINK**
+https://queuecare-n2k9.onrender.com
 ---
 
 ## How to Run the Application
